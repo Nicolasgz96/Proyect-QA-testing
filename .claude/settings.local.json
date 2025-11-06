@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe:*)",
+      "Bash(wslpath:*)",
+      "Bash(command -v:*)",
+      "Bash(apt list:*)",
+      "Bash(/mnt/c/Windows/py.exe:*)",
+      "Bash(python scripts/analysis/analyze_excel.py:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(pip3 list:*)",
+      "Bash(git config:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
