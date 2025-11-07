@@ -1,0 +1,60 @@
+# EOD Report Input Template
+# Fill in this file with your daily testing activities and run:
+# python scripts/reporting/generate_eod_report.py eod_notes.yaml
+
+# Date of testing (supports multiple formats: DD-MM-YYYY, YYYY-MM-DD, MM/DD/YYYY, "November 6, 2025")
+date: "06-11-2025"
+
+# Tester information (optional - will use git config if not provided)
+tester:
+  name: "Nicolas Gonzalez"
+  # email: "96.nicolasgonzalez@gmail.com"  # Optional
+
+# Product and environment details
+product:
+  name: "Hello Britannica"
+  platforms:
+    - "Web (Chrome – Stage)"
+    - "iOS App – iPhone 12 Pro Max (version 4.2.7 – Stage)"
+  roles_tested:
+    - "Student"
+    - "Teacher"
+
+# Areas covered during testing
+areas_covered:
+  - "Completed regression testing on iOS staging version 4.2.7"
+  - "Verified overall stability and performance across key user flows"
+  # Add more as needed
+
+# New bugs or QA notes identified
+bugs:
+  # Leave empty list [] if no bugs found
+  # Example:
+  # - title: "Login redirect issue on Chrome"
+  #   severity: "Medium"
+  #   description: "First login of day redirects to wrong page"
+  #   steps: "1. Clear cookies\n2. Login as student\n3. Observe redirect"
+
+# Bug fixes verified
+bug_fixes:
+  # Leave empty list [] if no fixes verified
+  # Example:
+  # - bug_id: "HB-1234"
+  #   title: "Fixed password reset email delay"
+  #   status: "Verified"
+
+# Requirements or stories confirmed
+requirements:
+  # Leave empty list [] if no requirements confirmed
+  # Example:
+  # - story_id: "HB-5678"
+  #   title: "User can export progress report as PDF"
+  #   status: "Confirmed"
+
+# Pending tasks or next steps
+next_steps:
+  - "Continue with regression and exploratory testing in current focus areas"
+  # Add more as needed
+
+# Overall testing status summary
+status: "Regression testing was completed successfully. All functionalities appear stable."

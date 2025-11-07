@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+"""
+Generate End-of-Day (EOD) report as a Microsoft Word document (from template).
+- Preserves exact formatting by opening the DOCX template directly.
+- REPLACES section content (not appends) after existing headings in the template.
+- Minimal parsing for raw notes (extend as needed).
+"""
+
+from docx import Document
+from datetime import datetime
+from pathlib import Path
+import re
+import sys
+from typing import List, Optional
+
+# Use relative paths from project root
+PROJECT_ROOT = Path(__file__).parent.parent
+TEMPLATE_DIR = PROJECT_ROOT / "documentation" / "templates"
+TEMPLATE_NAME = "Reports end of the day highlights.docx"
+
+# Section heading texts as they appear in your template (must match exactly)
+SECTIONS = [
+    "1. Product and Environment Tested",
+    "2. Areas Covered During Testing",
+    "3. New Bugs / QA Notes Identified",
+    "4. Bug Fixes Verified",
+    "5. Requirements / Stories Confirmed",
+    "6. Pending / Next Steps",
+    "7. Testing Status",
+]
+
+FALLBACKS = {
+    "areas": ["Regression and exploratory testing were carried out on both platforms."],
+    "bugs": ["No new bugs were reported today. Regression testing continued as planned."],
+    "fixes": ["No previously reported bugs were verified or closed today."],
+    "reqs": ["No new requirements or user stories were confirmed today."],
+    "next": ["Continue with regression and exploratory testing in current focus areas."],
+    "status": "Testing is ongoing. Regression and exploratory testing continue across all supported platforms.",
+    "product_block": [
+        "Product: Hello Britannica – Web & iOS App",
+        "Environments:",
+        "Web (Chrome – Stage)",
+        "iOS App – iPhone 12 Pro Max (version X.X.X – Stage)",
+        "Roles Tested: Student and Teacher",
+    ],
+}
+
+def _find_template_file() -> Path:
+    """Find the EOD template file."""
+    explicit = TEMPLATE_DIR / TEMPLATE_NAME
+    if explicit.exists():
+        return explicit
+    candidates = sorted(TEMPLATE_DIR.glob("*.docx"))
+    if not candidates:
+        raise FileNotFoundError(f"No DOCX template found in: {TEMPLATE_DIR}")
+    return candidates[0]
+
+def _format_date_for_header(date_obj: datetime) -> str:
+    """Format date for header (e.g., November 6, 2025)."""
+    return date_obj.strftime("%B %d, %Y")
+
+def _replace_header_dates(doc: Document, formatted_date: str) -> None:
+    """
+    Replace the date in the header while preserving formatting.
+    Template header contains: 'summarizing the testing activities and findings for <DATE>.'
+    """
+    for p in doc.paragraphs:
+        if "summarizing the testing activities and findings for" in p.text:
+            # Replace within runs to preserve formatting
+            for run in p.runs:
+                if "<DATE>" in run.text:
+                    run.text = run.text.replace("<DATE>", formatted_date)
+                elif "summarizing the testing activities and findings for" in run.text:
+                    # If no placeholder, replace the whole sentence
+                    p.text = f"Here is the end-of-day report summarizing the testing activities and findings for {formatted_date}."
+                    break
+            break
+
+def _find_paragraph_index(doc: Document, text: str) -> int:
+    """Find the index of a paragraph with exact text match."""
+    for i, p in enumerate(doc.paragraphs):
+        if p.text.strip() == text:
+            return i
+    return -1
+
+def delete_paragraph(paragraph) -> None:
+    """
+    Delete a paragraph from the document.
+    This removes the paragraph element from the document XML.
+    """
+    p = paragraph._element
+    p.getparent().remove(p)
+
+def _is_section_heading(paragraph_text: str) -> bool:
+    """Check if a paragraph is a section heading (starts with number)."""
+    stripped = paragraph_text.strip()
+    # Section headings start with a digit followed by a period (e.g., "1. ", "2. ")
+    return bool(re.match(r'^\d+\.', stripped))
+
+def _replace_content_in_section(doc: Document, section_heading: str, new_content_lines: List[str], use_bullets: bool = False) -> None:
+    """
+    Replace content in a section:
+    1. Find the section heading
+    2. Delete all content until the next section heading
+    3. Insert new content
+
+    Args:
+        doc: Document object
+        section_heading: The exact heading text to find
+        new_content_lines: List of content lines to insert
+        use_bullets: If True, format lines as bullets; otherwise plain paragraphs
+    """
+    # Find section heading index
+    start_idx = _find_paragraph_index(doc, section_heading)
+    if start_idx < 0:
+        raise ValueError(f"Section heading not found: '{section_heading}'")
+
+    # Find where this section ends (next section heading or end of document)
+    end_idx = len(doc.paragraphs)  # Default to end of document
+    for i in range(start_idx + 1, len(doc.paragraphs)):
+        if _is_section_heading(doc.paragraphs[i].text):
+            end_idx = i
+            break
+
+    # Delete existing content in this section (backwards to maintain indices)
+    paragraphs_to_delete = []
+    for i in range(start_idx + 1, end_idx):
+        paragraphs_to_delete.append(doc.paragraphs[i])
+
+    for p in paragraphs_to_delete:
+        delete_paragraph(p)
+
+    # Insert new content after the heading
+    # Since we deleted content, the heading is now at start_idx
+    # We need to insert after it
+    heading_element = doc.paragraphs[start_idx]._element
+
+    for line in new_content_lines:
+        if use_bullets:
+            # Try to use List Bullet style, fallback to manual bullet
+            try:
+                new_p = doc.add_paragraph(style='List Bullet')
+            except KeyError:
+                # If List Bullet style doesn't exist, add bullet manually
+                new_p = doc.add_paragraph()
+                new_p.add_run("• " + line)
+                # Move paragraph to correct position and continue
+                heading_element.addnext(new_p._element)
+                heading_element = new_p._element
+                continue
+        else:
+            new_p = doc.add_paragraph()
+
+        new_p.add_run(line)
+        # Insert after the heading (or after previous inserted paragraph)
+        heading_element.addnext(new_p._element)
+        heading_element = new_p._element
+
+def parse_notes(raw_notes: str) -> dict:
+    """
+    Minimal heuristic parser for your Notepad-style input.
+    Example input:
+      06-11-2025
+      Finished regression testing on mobile iOS staging version 4.2.7
+      Everything looks good
+    Returns a dict with keys used by the writer.
+    """
+    lines = [l.strip() for l in raw_notes.splitlines() if l.strip()]
+
+    # Date parsing
+    date_obj = None
+    date_pat = re.compile(r"\b(\d{2})-(\d{2})-(\d{4})\b")
+    for l in lines[:2]:
+        m = date_pat.search(l)
+        if m:
+            date_obj = datetime.strptime(m.group(0), "%d-%m-%Y")
+            break
+    if not date_obj:
+        # fallback to today
+        date_obj = datetime.now()
+        print(f"Warning: Could not parse date from notes, using today's date", file=sys.stderr)
+
+    # iOS version extraction
+    ios_version = None
+    for l in lines:
+        m = re.search(r"iOS.*version\s+([0-9]+\.[0-9]+\.[0-9]+)", l, flags=re.I)
+        if m:
+            ios_version = m.group(1)
+            break
+
+    # Areas covered - parse from notes
+    areas = []
+    for l in lines:
+        if "regression" in l.lower():
+            areas.append("Completed regression testing on iOS staging{}.".format(
+                f" version {ios_version}" if ios_version else ""
+            ))
+        if "login" in l.lower():
+            areas.append("Verified login flows and session behavior.")
+        if "performance" in l.lower() or "looks good" in l.lower():
+            areas.append("Verified overall stability and performance across key user flows.")
+
+    if not areas:
+        areas = FALLBACKS["areas"]
+
+    # Testing status
+    status = None
+    if any("looks good" in l.lower() for l in lines):
+        status = "Regression testing was completed successfully. All functionalities appear stable."
+    if not status:
+        status = FALLBACKS["status"]
+
+    # Product block
+    product_block = FALLBACKS["product_block"][:]
+    if ios_version:
+        # Replace version placeholder in iOS line
+        for i, txt in enumerate(product_block):
+            if "iOS App – iPhone 12 Pro Max" in txt:
+                product_block[i] = f"iOS App – iPhone 12 Pro Max (version {ios_version} – Stage)"
+
+    return {
+        "date_obj": date_obj,
+        "product_block": product_block,
+        "areas": areas,
+        "bugs": FALLBACKS["bugs"],
+        "fixes": FALLBACKS["fixes"],
+        "reqs": FALLBACKS["reqs"],
+        "next": FALLBACKS["next"],
+        "status": [status],  # Wrap in list for consistency
+    }
+
+def validate_template_structure(doc: Document) -> None:
+    """
+    Validate that the template contains all required section headings.
+    Raises ValueError if any sections are missing.
+    """
+    missing_sections = []
+    for section in SECTIONS:
+        if _find_paragraph_index(doc, section) < 0:
+            missing_sections.append(section)
+
+    if missing_sections:
+        raise ValueError(
+            f"Template is missing required sections:\n" +
+            "\n".join(f"  - {s}" for s in missing_sections)
+        )
+
+def create_from_template(raw_notes: str, output_dir: Path) -> Path:
+    """
+    Core workflow:
+    - Open template (preserves all styles, margins, bullets, etc.)
+    - Validate template structure
+    - Replace date in header
+    - REPLACE (not append) content in each section
+    """
+    data = parse_notes(raw_notes)
+    date_obj = data["date_obj"]
+    formatted_date = _format_date_for_header(date_obj)
+
+    template_path = _find_template_file()
+    doc = Document(template_path)
+
+    # Validate template has all required sections
+    validate_template_structure(doc)
+
+    # Update header date line
+    _replace_header_dates(doc, formatted_date)
+
+    # Replace content in each section
+    # 1. Product & Environment
+    _replace_content_in_section(doc, SECTIONS[0], data["product_block"], use_bullets=False)
+
+    # 2. Areas Covered
+    _replace_content_in_section(doc, SECTIONS[1], data["areas"], use_bullets=True)
+
+    # 3. New Bugs / QA Notes
+    _replace_content_in_section(doc, SECTIONS[2], data["bugs"], use_bullets=False)
+
+    # 4. Bug Fixes Verified
+    _replace_content_in_section(doc, SECTIONS[3], data["fixes"], use_bullets=False)
+
+    # 5. Requirements / Stories Confirmed
+    _replace_content_in_section(doc, SECTIONS[4], data["reqs"], use_bullets=False)
+
+    # 6. Pending / Next Steps
+    _replace_content_in_section(doc, SECTIONS[5], data["next"], use_bullets=True)
+
+    # 7. Testing Status
+    _replace_content_in_section(doc, SECTIONS[6], data["status"], use_bullets=False)
+
+    # Save
+    file_date = date_obj.strftime("%Y-%m-%d")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out_path = output_dir / f"EOD_{file_date}_Nicolas_Gonzalez.docx"
+    doc.save(str(out_path))
+    return out_path
+
+def main():
+    """Main entry point."""
+    # ==== Raw notes (update with your daily testing notes) ====
+    raw_notes = """06-11-2025
+Finished regression testing on mobile iOS staging version 4.2.7
+Everything looks good
+"""
+    # ==========================================================
+
+    output_dir = PROJECT_ROOT / "documentation" / "reports"
+
+    try:
+        print("Generating EOD from template...")
+        out = create_from_template(raw_notes, output_dir)
+        print(f"[OK] EOD created: {out}")
+        print("Now upload this file to your Google Drive EOD folder.")
+    except FileNotFoundError as e:
+        print(f"[ERROR] Template not found: {e}", file=sys.stderr)
+        print(f"Expected location: {TEMPLATE_DIR / TEMPLATE_NAME}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as e:
+        print(f"[ERROR] Template validation failed: {e}", file=sys.stderr)
+        sys.exit(1)
+    except PermissionError:
+        print(f"[ERROR] Permission denied. Is the output file open in Word?", file=sys.stderr)
+        sys.exit(1)
+    except ImportError as e:
+        print(f"[ERROR] Missing dependency: {e}", file=sys.stderr)
+        print("Run: pip3 install -r requirements.txt", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"[ERROR] Unexpected error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

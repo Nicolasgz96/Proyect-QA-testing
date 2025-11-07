@@ -11,7 +11,10 @@
       "Bash(find:*)",
       "Bash(pip3 list:*)",
       "Bash(git config:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(python3:*)",
+      "Bash(sudo apt update:*)",
+      "Bash(sudo apt install:*)"
     ],
     "deny": [],
     "ask": []

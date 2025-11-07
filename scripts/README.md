@@ -20,7 +20,8 @@ pip3 install -r ../requirements.txt
 scripts/
 ├── common/             # Shared utilities
 │   ├── __init__.py
-│   └── excel_utils.py  # Common Excel operations and path management
+│   ├── excel_utils.py  # Common Excel operations and path management
+│   └── docx_utils.py   # Common DOCX operations and path management
 ├── analysis/           # Analysis and modification scripts
 │   ├── analyze_excel.py
 │   ├── analyze_excel_files.py
@@ -29,9 +30,13 @@ scripts/
 │   ├── formatting_summary.py
 │   ├── restore_formatting.py
 │   └── verify_formatting.py
-└── verification/       # Verification scripts
-    ├── verify_test_cases.py
-    └── detailed_verification.py
+├── verification/       # Verification scripts
+│   ├── verify_test_cases.py
+│   └── detailed_verification.py
+├── reporting/          # EOD report generation
+│   └── generate_eod_report.py
+└── tests/              # Unit tests
+    └── test_eod_generator.py
 ```
 
 ## Available Scripts
@@ -91,22 +96,118 @@ Verify that formatting was properly restored.
 python3 scripts/formatting/verify_formatting.py
 ```
 
+### Reporting Scripts
+
+#### `reporting/generate_eod_report.py`
+Generate professional End-of-Day (EOD) reports from structured YAML input.
+
+**Features:**
+- YAML-based structured input (replaces manual text editing)
+- Automatic tester name detection from git config
+- Flexible date parsing (multiple formats supported)
+- Dry-run mode for previewing reports
+- Automatic archival of old reports
+- Full template validation and error handling
+
+**Quick Start:**
+
+```bash
+# Create your EOD notes file (YAML format)
+cp documentation/templates/eod_input_template.yaml my_eod.yaml
+# Edit my_eod.yaml with your testing notes
+
+# Generate the report
+python3 scripts/reporting/generate_eod_report.py my_eod.yaml
+
+# Preview without saving (dry-run)
+python3 scripts/reporting/generate_eod_report.py my_eod.yaml --dry-run
+
+# Archive old reports (older than 30 days)
+python3 scripts/reporting/generate_eod_report.py --archive --days 30
+```
+
+**YAML Input Format:**
+
+```yaml
+date: "06-11-2025"  # Supports: DD-MM-YYYY, YYYY-MM-DD, MM/DD/YYYY, "Month DD, YYYY"
+
+product:
+  name: "Hello Britannica"
+  platforms:
+    - "Web (Chrome – Stage)"
+    - "iOS App – iPhone 12 Pro Max (version 4.2.7 – Stage)"
+  roles_tested: ["Student", "Teacher"]
+
+areas_covered:
+  - "Completed regression testing on iOS staging version 4.2.7"
+  - "Verified overall stability and performance"
+
+bugs: []  # Leave empty if no bugs found
+
+bug_fixes: []  # Leave empty if no fixes verified
+
+requirements: []  # Leave empty if no requirements confirmed
+
+next_steps:
+  - "Continue with regression testing"
+
+status: "Regression testing completed successfully. All functionalities appear stable."
+```
+
+**Command-line Options:**
+
+```bash
+# Generate from YAML
+python3 scripts/reporting/generate_eod_report.py <input.yaml>
+
+# Custom output location
+python3 scripts/reporting/generate_eod_report.py input.yaml --output custom_report.docx
+
+# Dry-run mode (preview only, don't save)
+python3 scripts/reporting/generate_eod_report.py input.yaml --dry-run
+
+# Archive old reports
+python3 scripts/reporting/generate_eod_report.py --archive --days 30
+
+# Preview archival without moving files
+python3 scripts/reporting/generate_eod_report.py --archive --days 30 --dry-run
+```
+
+**Output:**
+- Reports are saved to `documentation/reports/`
+- Filename format: `EOD_YYYY-MM-DD_TesterName.docx`
+- Archived reports go to `documentation/reports/archive/YYYY-MM/`
+
 ## Common Utilities
 
-All scripts now use shared utilities from `common/excel_utils.py`:
+All scripts use shared utilities for consistency and reliability.
+
+### Excel Utilities (`common/excel_utils.py`)
 
 - **Path Management**: Centralized path resolution (no more hardcoded paths)
 - **Error Handling**: Proper exception handling and user feedback
 - **Safe Operations**: Safe loading and saving of Excel files
 - **Type Hints**: Better code documentation and IDE support
 
-### Key Functions
-
+**Key Functions:**
 - `get_project_root()` - Get project root directory
 - `get_excel_path()` - Get path to main Excel file
 - `load_excel_safely()` - Load Excel with error handling
 - `save_excel_safely()` - Save Excel with error handling
 - `print_section_header()` - Formatted output headers
+
+### DOCX Utilities (`common/docx_utils.py`)
+
+- **Path Management**: Centralized paths for templates and reports
+- **Error Handling**: Safe DOCX operations with proper error messages
+- **Archive Support**: Path helpers for report archival
+
+**Key Functions:**
+- `get_template_path()` - Get path to DOCX templates
+- `get_report_output_path()` - Get path for report output
+- `get_report_archive_path()` - Get path for archived reports
+- `load_docx_safely()` - Load DOCX with error handling
+- `save_docx_safely()` - Save DOCX with error handling
 
 ## Recent Improvements
 
