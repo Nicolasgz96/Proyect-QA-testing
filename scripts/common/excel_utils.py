@@ -9,18 +9,7 @@ from typing import Optional
 from openpyxl import load_workbook
 from openpyxl.workbook import Workbook
 
-
-def get_project_root() -> Path:
-    """
-    Get the project root directory dynamically.
-
-    Returns:
-        Path: Project root directory
-    """
-    script_dir = Path(__file__).resolve().parent
-    # Go up from scripts/common/ to project root
-    project_root = script_dir.parent.parent
-    return project_root
+from .path_utils import get_project_root
 
 
 def get_excel_path(filename: str = "Hello Master test cases.xlsx") -> Path:

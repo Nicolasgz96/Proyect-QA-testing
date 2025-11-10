@@ -7,18 +7,7 @@ from pathlib import Path
 from typing import Optional
 from docx import Document
 
-
-def get_project_root() -> Path:
-    """
-    Get the project root directory dynamically.
-
-    Returns:
-        Path: Project root directory
-    """
-    script_dir = Path(__file__).resolve().parent
-    # Go up from scripts/common/ to project root
-    project_root = script_dir.parent.parent
-    return project_root
+from .path_utils import get_project_root
 
 
 def get_template_path(filename: str = "Reports end of the day highlights.docx") -> Path:
