@@ -39,7 +39,10 @@ python3 scripts/reporting/generate_eod_report.py my_eod.yaml
 python3 scripts/reporting/generate_eod_report.py my_eod.yaml --dry-run
 python3 scripts/reporting/generate_eod_report.py --archive --days 30
 
-# Google Drive Upload (requires setup - see GOOGLE_DRIVE_SETUP.md)
+# Google Drive Upload - Simple Method (File Stream)
+./scripts/reporting/upload_eod_simple.sh  # Uploads latest EOD and cleans up old files
+
+# Google Drive Upload - OAuth Method (Advanced - see GOOGLE_DRIVE_SETUP.md)
 python3 scripts/reporting/upload_to_gdrive.py --upload documentation/reports/EOD_2025-11-10_nico.docx
 python3 scripts/reporting/upload_to_gdrive.py --upload EOD_file.docx --delete-yesterday --tester nico
 python3 scripts/reporting/upload_to_gdrive.py --list

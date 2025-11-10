@@ -151,7 +151,18 @@ python scripts/reporting/generate_eod_report.py --archive --days 30
 
 ### Uploading to Google Drive
 
-**Note:** Requires one-time setup - see [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md)
+**Simple Method** (if you have Google Drive for Desktop installed):
+
+```bash
+# Automatic upload with cleanup
+./scripts/reporting/upload_eod_simple.sh
+
+# This will:
+# - Upload the latest EOD file to G:\My Drive\Daily reports\
+# - Delete EOD files older than 7 days
+```
+
+**Advanced Method** (OAuth API - see [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md)):
 
 ```bash
 # Upload EOD report to Google Drive
@@ -162,10 +173,9 @@ python scripts/reporting/upload_to_gdrive.py \
     --upload documentation/reports/EOD_2025-11-10_nico.docx \
     --delete-yesterday \
     --tester nico
-
-# List files in Google Drive
-python scripts/reporting/upload_to_gdrive.py --list
 ```
+
+See [GOOGLE_DRIVE_SIMPLE.md](GOOGLE_DRIVE_SIMPLE.md) for the simple method guide.
 
 ## Key Features
 
