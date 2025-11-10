@@ -35,9 +35,17 @@ Hello_Britannica/
 │   │   ├── restore_formatting.py
 │   │   ├── verify_formatting.py
 │   │   └── formatting_summary.py
-│   └── verification/           # Verification scripts
-│       ├── verify_test_cases.py
-│       └── detailed_verification.py
+│   ├── reporting/              # EOD reporting scripts
+│   │   ├── generate_eod_report.py
+│   │   └── upload_to_gdrive.py
+│   ├── verification/           # Verification scripts
+│   │   ├── verify_test_cases.py
+│   │   └── detailed_verification.py
+│   ├── common/                 # Shared utilities
+│   │   ├── excel_utils.py
+│   │   └── docx_utils.py
+│   └── tests/                  # Unit tests
+│       └── test_eod_generator.py
 │
 └── data/                        # JSON and other data files
     └── excel_analysis.json
@@ -68,9 +76,20 @@ Hello_Britannica/
 - **verify_formatting.py** - Verifies formatting was properly restored
 - **formatting_summary.py** - Provides detailed formatting summary
 
+#### Reporting Scripts (scripts/reporting/)
+- **generate_eod_report.py** - Generates professional EOD reports from YAML input
+- **upload_to_gdrive.py** - Uploads EOD reports to Google Drive with OAuth2
+
 #### Verification Scripts (scripts/verification/)
 - **verify_test_cases.py** - Verifies test cases were added correctly
 - **detailed_verification.py** - Detailed verification with statistics
+
+#### Common Utilities (scripts/common/)
+- **excel_utils.py** - Centralized Excel file handling and path resolution
+- **docx_utils.py** - Centralized DOCX file handling and path resolution
+
+#### Tests (scripts/tests/)
+- **test_eod_generator.py** - Unit tests for EOD report generator
 
 ## Usage
 
@@ -112,13 +131,52 @@ python scripts/verification/verify_test_cases.py
 python scripts/verification/detailed_verification.py
 ```
 
+### Generating EOD Reports
+
+```bash
+# Create EOD input file from template
+cp documentation/templates/eod_input_template.yaml eod_inputs/my_eod.yaml
+
+# Edit eod_inputs/my_eod.yaml with your testing notes
+
+# Generate report
+python scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml
+
+# Preview without saving (dry-run)
+python scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml --dry-run
+
+# Archive old reports (older than 30 days)
+python scripts/reporting/generate_eod_report.py --archive --days 30
+```
+
+### Uploading to Google Drive
+
+**Note:** Requires one-time setup - see [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md)
+
+```bash
+# Upload EOD report to Google Drive
+python scripts/reporting/upload_to_gdrive.py --upload documentation/reports/EOD_2025-11-10_nico.docx
+
+# Upload and delete yesterday's EOD
+python scripts/reporting/upload_to_gdrive.py \
+    --upload documentation/reports/EOD_2025-11-10_nico.docx \
+    --delete-yesterday \
+    --tester nico
+
+# List files in Google Drive
+python scripts/reporting/upload_to_gdrive.py --list
+```
+
 ## Key Features
 
 1. **Organized Structure** - Clear separation of test cases, documentation, and scripts
 2. **Backup Management** - Separate folders for current and backup files
 3. **Automated Scripts** - Python automation for analysis, formatting, and verification
-4. **Relative Paths** - All scripts use relative paths for portability
-5. **Comprehensive Documentation** - Detailed reports and user journeys
+4. **EOD Report Generation** - YAML-based professional EOD reports with automatic archival
+5. **Google Drive Integration** - OAuth2-authenticated upload with automatic cleanup
+6. **Centralized Utilities** - Dynamic path resolution for cross-platform compatibility
+7. **Comprehensive Testing** - Unit tests for critical functionality
+8. **Comprehensive Documentation** - Detailed guides for setup and usage
 
 ## Script Highlights
 
@@ -161,19 +219,51 @@ python scripts/verification/detailed_verification.py
 
 ## Getting Started
 
-1. Navigate to the project directory: `cd /home/onik/proyects/AI/Hello_Britannica/`
-2. Review the test cases: Open `test_cases/current/Hello Master test cases.xlsx`
-3. Run analysis: `python scripts/analysis/analyze_excel.py`
-4. Check documentation: Review files in `documentation/reports/`
+1. **Clone and Setup**
+   ```bash
+   cd /home/onik/proyects/AI/Hello_Britannica/
+   pip install -r requirements.txt
+   ```
+
+2. **Review Test Cases**
+   - Open `test_cases/current/Hello Master test cases.xlsx`
+
+3. **Run Analysis**
+   ```bash
+   python scripts/analysis/analyze_excel.py
+   ```
+
+4. **Generate EOD Report**
+   ```bash
+   # Copy template
+   cp documentation/templates/eod_input_template.yaml eod_inputs/my_eod.yaml
+
+   # Edit my_eod.yaml with your testing notes
+
+   # Generate report
+   python scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml
+   ```
+
+5. **Setup Google Drive (Optional)**
+   - Follow the guide in [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md)
+   - Upload EOD reports automatically to your Google Drive
 
 ## Dependencies
 
-- Python 3.x
-- openpyxl library (for Excel file handling)
+- Python 3.7 or higher
+- openpyxl (Excel file handling)
+- python-docx (Word document handling)
+- PyYAML (YAML parsing)
+- Google API client libraries (for Google Drive integration)
 
-Install dependencies:
+Install all dependencies:
 ```bash
-pip install openpyxl
+# Install Python 3 (if not already installed)
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+
+# Install project dependencies
+pip install -r requirements.txt
 ```
 
 ## Contact

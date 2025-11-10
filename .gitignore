@@ -48,3 +48,14 @@ htmlcov/
 
 # Logs
 *.log
+
+# Google Drive API credentials (SENSITIVE - DO NOT COMMIT)
+credentials.json
+token.pickle
+
+# EOD input files (user-specific testing data)
+eod_inputs/*.yaml
+eod_inputs/*.yml
+
+# Generated EOD reports (should not be committed)
+documentation/reports/EOD_*.docx

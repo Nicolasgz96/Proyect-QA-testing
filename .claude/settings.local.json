@@ -14,7 +14,8 @@
       "Bash(git init:*)",
       "Bash(python3:*)",
       "Bash(sudo apt update:*)",
-      "Bash(sudo apt install:*)"
+      "Bash(sudo apt install:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
