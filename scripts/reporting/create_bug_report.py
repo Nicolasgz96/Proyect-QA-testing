@@ -60,51 +60,36 @@ def create_bug_report():
     # Steps to Reproduce
     doc.add_heading('Steps to Reproduce:', 2)
 
-    doc.add_heading('Path A: First Question (Incorrect Behavior)', 3)
-    steps_a = [
-        'Launch Hello Britannica Mobile App on iOS device',
-        'Log in using a student account credentials',
-        'Navigate to: Level 1 > School & Education > Classroom Routines',
-        'Select "What\'s in the Classroom?" activity',
-        'Observe the classroom image displayed',
-        'At the first question prompt, enter an intentionally incorrect answer in English describing the classroom (e.g., write "dog" when no dog is visible)',
-        'Submit the incorrect answer',
-        'Observe the following:'
+    steps = [
+        '[Step 1 – Launch Hello Britannica Mobile App on iOS device and log in using student account credentials]',
+        '',
+        '[Step 2 – Navigate to: Level 1 > School & Education > Classroom Routines > Select "What\'s in the Classroom?" activity]',
+        '',
+        '[Step 3 – Observe the classroom image displayed for the first question]',
+        '',
+        '[Step 4 – Enter an intentionally incorrect answer in English describing the classroom (e.g., write "dog" when no dog is visible in the image)]',
+        '',
+        '[Step 5 – Submit the incorrect answer]',
+        '',
+        '[Step 6 – Observe that the game displays an error message indicating the answer is wrong, BUT incorrectly awards 3 stars and allows progression to the next question]',
+        '',
+        '[Step 7 – Proceed to the second question with the same classroom image but different prompt]',
+        '',
+        '[Step 8 – Enter an intentionally incorrect answer for the second question and submit]',
+        '',
+        '[Step 9 – Observe that the game correctly displays an error message, does NOT award stars, and does NOT allow progression]'
     ]
-    for i, step in enumerate(steps_a, 1):
-        doc.add_paragraph(f'{i}. {step}', style='List Number')
-
-    observations_a = [
-        'Error message appears indicating the answer is wrong',
-        'Issue: Game awards 3 stars despite wrong answer',
-        'Issue: Game allows progression to next question'
-    ]
-    for obs in observations_a:
-        p = doc.add_paragraph(obs, style='List Bullet 2')
-        if 'Issue:' in obs:
-            for run in p.runs:
-                if 'Issue:' in run.text:
-                    run.font.color.rgb = RGBColor(255, 0, 0)
-                    run.bold = True
-
-    doc.add_heading('Path B: Second Question (Correct Behavior)', 3)
-    steps_b = [
-        'Continue from step 8 above to the second question',
-        'View the same classroom image with a different question prompt',
-        'Enter an intentionally incorrect answer for the second question',
-        'Submit the incorrect answer',
-        'Observe the following:'
-    ]
-    for i, step in enumerate(steps_b, 1):
-        doc.add_paragraph(f'{i}. {step}', style='List Number')
-
-    observations_b = [
-        'Error message appears indicating the answer is wrong',
-        'Game does NOT award stars (correct behavior)',
-        'Game does NOT allow progression (correct behavior)'
-    ]
-    for obs in observations_b:
-        doc.add_paragraph(obs, style='List Bullet 2')
+    for step in steps:
+        if step:  # Only add non-empty lines
+            p = doc.add_paragraph(step)
+            if 'Step 6' in step:
+                # Highlight the problematic step
+                for run in p.runs:
+                    if 'BUT incorrectly' in run.text or '3 stars' in run.text:
+                        run.font.color.rgb = RGBColor(255, 0, 0)
+                        run.bold = True
+        else:
+            doc.add_paragraph()  # Add blank line
 
     # Expected Behavior
     doc.add_heading('Expected Behavior:', 2)
