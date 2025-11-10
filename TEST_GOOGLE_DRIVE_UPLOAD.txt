@@ -1,0 +1,21 @@
+Google Drive Upload Test File
+================================
+
+This is a test file to verify Google Drive integration is working correctly.
+
+Date: November 10, 2025
+System: Hello Britannica QA Project
+Purpose: Verify Google Drive File Stream upload functionality
+
+Features Tested:
+- Direct file copy to G:\My Drive\Daily reports\
+- Upload script functionality
+- File visibility in Google Drive web interface
+
+If you can see this file in Google Drive, the integration is working perfectly!
+
+Project: Hello Britannica QA Test Management
+Location: /home/onik/proyects/AI/Hello_Britannica
+Google Drive Path: G:\My Drive\Daily reports\
+
+✅ Upload Test Successful!
