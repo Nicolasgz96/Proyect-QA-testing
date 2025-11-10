@@ -99,36 +99,36 @@ From the project root directory:
 
 ```bash
 # Analyze Excel file structure
-python scripts/analysis/analyze_excel.py
+python3 scripts/analysis/analyze_excel.py
 
 # Compare Excel files
-python scripts/analysis/analyze_excel_files.py
+python3 scripts/analysis/analyze_excel_files.py
 
 # Add test cases from markdown
-python scripts/analysis/add_test_cases.py
+python3 scripts/analysis/add_test_cases.py
 ```
 
 ### Running Formatting Scripts
 
 ```bash
 # Restore original formatting
-python scripts/formatting/restore_formatting.py
+python3 scripts/formatting/restore_formatting.py
 
 # Verify formatting restoration
-python scripts/formatting/verify_formatting.py
+python3 scripts/formatting/verify_formatting.py
 
 # Get formatting summary
-python scripts/formatting/formatting_summary.py
+python3 scripts/formatting/formatting_summary.py
 ```
 
 ### Running Verification Scripts
 
 ```bash
 # Verify test cases
-python scripts/verification/verify_test_cases.py
+python3 scripts/verification/verify_test_cases.py
 
 # Detailed verification
-python scripts/verification/detailed_verification.py
+python3 scripts/verification/detailed_verification.py
 ```
 
 ### Generating EOD Reports
@@ -140,13 +140,13 @@ cp documentation/templates/eod_input_template.yaml eod_inputs/my_eod.yaml
 # Edit eod_inputs/my_eod.yaml with your testing notes
 
 # Generate report
-python scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml
+python3 scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml
 
 # Preview without saving (dry-run)
-python scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml --dry-run
+python3 scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml --dry-run
 
 # Archive old reports (older than 30 days)
-python scripts/reporting/generate_eod_report.py --archive --days 30
+python3 scripts/reporting/generate_eod_report.py --archive --days 30
 ```
 
 ### Uploading to Google Drive
@@ -166,10 +166,10 @@ python scripts/reporting/generate_eod_report.py --archive --days 30
 
 ```bash
 # Upload EOD report to Google Drive
-python scripts/reporting/upload_to_gdrive.py --upload documentation/reports/EOD_2025-11-10_nico.docx
+python3 scripts/reporting/upload_to_gdrive.py --upload documentation/reports/EOD_2025-11-10_nico.docx
 
 # Upload and delete yesterday's EOD
-python scripts/reporting/upload_to_gdrive.py \
+python3 scripts/reporting/upload_to_gdrive.py \
     --upload documentation/reports/EOD_2025-11-10_nico.docx \
     --delete-yesterday \
     --tester nico
