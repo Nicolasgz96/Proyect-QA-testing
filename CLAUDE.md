@@ -36,6 +36,10 @@ python3 scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml --dry-ru
 
 # Upload EOD to Google Drive (OAuth method - cross-platform)
 python3 scripts/reporting/upload_to_gdrive.py --upload documentation/reports/EOD_file.docx
+
+# Generate bug report (creates DOCX and uploads to Google Drive)
+# Note: Use Windows Python launcher for WSL environments
+/mnt/c/Windows/py.exe scripts/reporting/create_bug_report.py
 ```
 
 ## Architecture Overview
@@ -87,9 +91,11 @@ from common.excel_utils import load_excel_safely, get_excel_path
 **`scripts/verification/`** - Test case validation
 - Verify test cases added correctly, check test IDs, generate statistics
 
-**`scripts/reporting/`** - EOD report generation and upload
-- YAML → Professional DOCX conversion
-- Google Drive integration (OAuth and File Stream methods)
+**`scripts/reporting/`** - EOD report generation, bug report generation, and upload
+- `generate_eod_report.py` - YAML → Professional DOCX conversion for EOD reports
+- `create_bug_report.py` - Generate Jira-formatted bug reports as DOCX files
+- `upload_eod_simple.sh` - Simple Google Drive upload (Windows/WSL with Google Drive for Desktop)
+- `upload_to_gdrive.py` - OAuth2-based Google Drive integration (cross-platform)
 - Automatic archival and cleanup
 
 **`scripts/common/`** - Shared utilities
@@ -149,16 +155,19 @@ status: "Testing completed successfully."
 ### Two Methods Available
 
 **Simple Method** (Windows/WSL with Google Drive for Desktop):
-- Direct file copy to `G:\My Drive\Daily reports\`
-- Script: `./scripts/reporting/upload_eod_simple.sh`
+- Direct file copy to `G:\My Drive\Daily reports\` (for EOD reports)
+- Direct file copy to `G:\My Drive\Bug Reports\` (for bug reports)
+- Script: `./scripts/reporting/upload_eod_simple.sh` (for EOD reports)
+- Uses PowerShell commands for bug report uploads
 - Automatic cleanup of files older than 7 days
-- **Limitation**: Windows-only (uses PowerShell)
+- **Limitation**: Windows-only (requires Google Drive for Desktop installed)
 
 **OAuth Method** (Cross-platform):
 - Uses Google Drive API with OAuth2
 - Script: `scripts/reporting/upload_to_gdrive.py`
 - Requires one-time setup (see `GOOGLE_DRIVE_SETUP.md`)
 - Works on any platform
+- Can specify custom folders with `--folder` parameter
 
 ## Excel File Structure
 
@@ -330,11 +339,95 @@ See `CHANGELOG.md` for complete history.
 
 ## Specialized Agents
 
-The `.claude/agents/` directory contains specialized agents:
+The `.claude/agents/` directory contains specialized agents for QA workflows:
 
-- **eod-report-generator** - Converts informal testing notes to YAML → DOCX → Google Drive
-- **qa-test-planner** - Creates comprehensive test plans and test cases
-- **jira-bug-writer** - Generates Jira-formatted bug reports
-- **brutal-project-auditor** - Provides unfiltered code quality analysis
+### eod-report-generator
+Converts informal testing notes to professional EOD reports with full automation:
+- **Input**: Casual testing notes (e.g., "Tested iOS login, found 2 bugs")
+- **Process**: YAML creation → DOCX generation → Google Drive upload
+- **Output**: Professional EOD report in `documentation/reports/` and Google Drive
+- **Key Features**: Auto-detects tester name, supports multiple date formats, automatic cleanup
 
-These agents have access to this CLAUDE.md and understand the project architecture.
+### jira-bug-writer
+Generates Jira-formatted bug reports with natural, professional tone:
+- **Input**: Bug description (platform, steps, expected/actual behavior)
+- **Process**: Creates Python script → Generates DOCX → Uploads to Google Drive
+- **Output**: Jira-ready bug report in `documentation/reports/` and `G:\My Drive\Bug Reports\`
+- **Format**: Uses `[Step 1 – description]` format, includes all Jira fields
+- **Tone**: Natural, conversational (not robotic), follows Britannica QA standard
+
+### qa-test-planner
+Creates comprehensive test plans and test case documentation:
+- **Input**: Web application URLs, user journey documents, feature requirements
+- **Process**: Analyzes application → Creates test strategy → Generates test cases
+- **Output**: Complete test plans with traceability matrices
+
+### brutal-project-auditor
+Provides unfiltered, honest code quality analysis:
+- **Input**: Request for critical assessment
+- **Process**: Analyzes codebase for issues, anti-patterns, technical debt
+- **Output**: Brutally honest report with actionable improvements
+
+**Usage**: Invoke agents using `@agent-name` or through the Task tool. All agents have access to this CLAUDE.md and understand the project architecture.
+
+## Bug Report Workflow
+
+Bug reports follow a streamlined automation workflow:
+
+### Process
+1. Provide bug information to jira-bug-writer agent (platform, steps, expected/actual behavior)
+2. Agent creates Python script at `scripts/reporting/create_bug_report.py`
+3. Script generates professional DOCX with Britannica QA formatting
+4. File saved to `documentation/reports/BUG_YYYY-MM-DD_Description.docx`
+5. Automatically uploaded to `G:\My Drive\Bug Reports\` via PowerShell
+6. Upload verified and confirmed
+
+### Bug Report Format
+- Title: Short, clear problem summary (60 chars max)
+- Priority: Blocker/Critical/High/Medium/Low
+- Environment: Platform, version, device, role, date
+- Description: What, where, why (conversational tone)
+- Steps to Reproduce: `[Step 1 – include URL/credentials]`, `[Step 2 – action]`, etc.
+- Expected Behavior: Bullet points of correct behavior
+- Actual Behavior: Natural explanation (as if telling a colleague)
+- Impact: Educational integrity, user confusion, data tracking
+- Suggested Fix: Technical recommendations
+- Notes: Video evidence, reproducibility, regression risk
+- Jira Field Selections: Project, Work Type, Priority, Components, Labels, etc.
+
+### PowerShell Upload Commands
+```bash
+# Create folder if needed and upload bug report
+powershell.exe -Command "
+    if (-not (Test-Path 'G:\\My Drive\\Bug Reports')) {
+        New-Item -Path 'G:\\My Drive\\Bug Reports' -ItemType Directory -Force | Out-Null
+    }
+    Copy-Item 'documentation/reports/BUG_YYYY-MM-DD_Description.docx' -Destination 'G:\\My Drive\\Bug Reports\\BUG_YYYY-MM-DD_Description.docx' -Force
+    Write-Host 'Bug report uploaded successfully!'
+"
+
+# Verify upload
+powershell.exe -Command "
+    if (Test-Path 'G:\\My Drive\\Bug Reports\\BUG_YYYY-MM-DD_Description.docx') {
+        Get-Item 'G:\\My Drive\\Bug Reports\\BUG_YYYY-MM-DD_Description.docx' | Select-Object Name, Length, LastWriteTime
+    }
+"
+```
+
+## Python Environment Notes
+
+### WSL Environment
+- **Python 3 not available in WSL PATH** - Use Windows Python launcher instead
+- Command: `/mnt/c/Windows/py.exe` (points to Python 3.13.3)
+- All scripts designed to work with Windows Python via WSL filesystem
+- File paths automatically converted (WSL paths work with Windows Python)
+
+### Script Execution Examples
+```bash
+# From WSL, using Windows Python
+/mnt/c/Windows/py.exe scripts/reporting/create_bug_report.py
+/mnt/c/Windows/py.exe scripts/reporting/generate_eod_report.py eod_inputs/my_eod.yaml
+
+# PowerShell commands work directly in WSL
+powershell.exe -Command "Copy-Item 'file.docx' -Destination 'G:\\My Drive\\folder\\file.docx'"
+```
